@@ -8,19 +8,10 @@
 //  - [Chinese] https://docs.cocos.com/creator/manual/zh/scripting/life-cycle-callbacks.html
 //  - [English] https://www.cocos2d-x.org/docs/creator/manual/en/scripting/life-cycle-callbacks.html
 
-const Mover = cc.Class({
+const StartPhysics = cc.Class({
     extends: cc.Component,
 
     properties: {
-        label: {
-            type: cc.Label,
-            default: null,
-        },
-        text: 'hello',
-        speed: {
-            type: cc.Integer,
-            default: 100,
-        }
         // foo: {
         //     // ATTRIBUTES:
         //     default: null,        // The default value will be used only when the component attaching
@@ -40,16 +31,13 @@ const Mover = cc.Class({
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
+    onLoad () {
+        cc.director.getPhysicsManager().enabled = true;
+    },
 
     start () {
 
     },
 
-    update (dt) {
-        this.node.x -= 100 * dt;
-        if (this.node.x < -(this.node.parent.width/2) - this.node.width/2) {
-            this.node.x = (this.node.parent.width/2 + this.node.width/2);
-        }
-    },
+    // update (dt) {},
 });
