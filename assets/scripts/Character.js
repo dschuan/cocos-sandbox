@@ -13,30 +13,36 @@ cc.Class({
 
     properties: {
         // main character's jump height
-        jumpHeight: 0,
-        // main character's jump duration
-        jumpDuration: 0,
+        jumpForce: 0,
         // maximal movement speed
         maxMoveSpeed: 0,
         // acceleration
-        accel: 0,
+        leftButton: {
+            default: null,
+            type: cc.Node,
+        },
+        rightButton: {
+            default: null,
+            type: cc.Node,
+        },
+        upButton: {
+            default: null,
+            type: cc.Node,
+        }
     },
 
-    // functions
-    setJumpAction: function() {
-        // jump up
-        
-    },
     // LIFE-CYCLE CALLBACKS:
 
+
+    // Registers movements on arrow key press
     onKeyDown(e){
-        console.log(this.allowJump);
+        console.log('Key down', this.allowJump, this.jump);
         switch(e.keyCode){
             case cc.macro.KEY.right:
-                this.accRight = true;
+                this.xSpeed = 300;
                 break;
             case cc.macro.KEY.left:
-                this.accLeft = true;
+                this.xSpeed = -300;
                 break;       
             case cc.macro.KEY.up:
                 this.jump = true;
@@ -46,12 +52,14 @@ cc.Class({
 
     onKeyUp (event) {
         // unset a flag when key released
+        console.log('Key up', this.allowJump, this.jump);
+
         switch(event.keyCode) {
             case cc.macro.KEY.right:
-                this.accRight = false;
+                this.xSpeed = 0;
                 break;
             case cc.macro.KEY.left:
-                this.accLeft = false;
+                this.xSpeed = 0;
                 break;
             case cc.macro.KEY.up:
                 this.jump = false;
@@ -59,17 +67,76 @@ cc.Class({
         }
     },
 
+    // Registers touch behaviours on the movement buttons
+    onTouch (button) {
+        this[button].on(cc.Node.EventType.TOUCH_START, function (event) {
+            switch (button) {
+                case 'leftButton':
+                    this.xSpeed = -300;
+                    break;
+                case 'rightButton':
+                    this.xSpeed = 300;
+                    break;
+                case 'upButton':
+                    this.jump = true;
+                    break;
+            }
+        }, this);
+        
+        this[button].on(cc.Node.EventType.TOUCH_END, function (event) {
+            switch (button) {
+                case 'leftButton':
+                    this.xSpeed = 0;
+                    break;
+                case 'rightButton':
+                    this.xSpeed = 0;
+                    break;
+                case 'upButton':
+                    this.jump = false;
+                    break;
+            }
+        }, this);
+
+        this[button].on(cc.Node.EventType.TOUCH_CANCEL, function (event) {
+            switch (button) {
+                case 'leftButton':
+                    this.xSpeed = 0;
+                    break;
+                case 'rightButton':
+                    this.xSpeed = 0;
+                    break;
+                case 'upButton':
+                    this.jump = false;
+                    break;
+            }
+        }, this);
+    },
+
+    // Jumping behaviour, prevents jumps from occurring until character collides with Land
+    onBeginContact(contact, selfCollider, otherCollider) {
+        console.log(otherCollider.node.name);
+        if (otherCollider.node.name === "Land") {
+            this.allowJump = true;
+        }
+    },
+
     onLoad () {
-        this.accLeft = false;
-        this.accRight = false;
+        // State management for jumping action
         this.jump = false;
         this.allowJump = true;
 
         // The main character's current horizontal velocity
         this.xSpeed = 0;
+
+        // Key press register for movements
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown,this);
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);   
         cc.director.getPhysicsManager().enabled = true;
+
+        // Mount movement buttons
+        this.onTouch('leftButton');
+        this.onTouch('rightButton');
+        this.onTouch('upButton');
 
     },
 
@@ -79,24 +146,15 @@ cc.Class({
         cc.systemEvent.off(cc.SystemEvent.EventType.KEY_UP, this.onKeyUp, this);
     },
 
-    onBeginContact(contact, selfCollider, otherCollider) {
-        console.log(otherCollider.node.name);
-        if (otherCollider.node.name === "Land") {
-            this.allowJump = true;
-        }
-    },
-
     update (dt) {
+
         // update speed of each frame according to the current acceleration direction
-        if (this.accLeft) {
-            this.xSpeed -= this.accel * dt;
-        } else if (this.accRight) {
-            this.xSpeed += this.accel * dt;
-        }
         if (this.jump && this.allowJump) {
+            console.log('Jumping')
             let rigidbody = this.node.getComponent(cc.RigidBody);
-            rigidbody.applyForceToCenter(2);
-            this.jump = false;
+            rigidbody.applyLinearImpulse(new cc.Vec2(0,this.jumpForce), rigidbody.getWorldCenter(),true);
+            this.allowJump = false;
+
         }
 
         // restrict the movement speed of the main character to the maximum movement speed

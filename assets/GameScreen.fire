@@ -410,12 +410,12 @@
     "_anchorPoint": {
       "__type__": "cc.Vec2",
       "x": 0.5,
-      "y": 0.5
+      "y": 1
     },
     "_position": {
       "__type__": "cc.Vec3",
-      "x": -388.384,
-      "y": 61.951,
+      "x": -388.184,
+      "y": 118.951,
       "z": 0
     },
     "_scale": {
@@ -480,7 +480,7 @@
     "_enabled": true,
     "_type": 2,
     "_allowSleep": true,
-    "_gravityScale": 1,
+    "_gravityScale": 3,
     "_linearDamping": 0,
     "_angularDamping": 0,
     "_linearVelocity": {
@@ -512,7 +512,7 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 0
+      "y": -466.5
     },
     "_size": {
       "__type__": "cc.Size",
@@ -529,11 +529,10 @@
       "__id__": 9
     },
     "_enabled": true,
-    "jumpHeight": 200,
-    "jumpDuration": 1000,
-    "maxMoveSpeed": 200,
-    "accel": 1000,
-    "_id": "2aHmapVsRCd5GNn1HkXsIQ"
+    "jumpForce": 15000,
+    "jumpDuration": 0,
+    "maxMoveSpeed": 300,
+    "_id": "86hpTM0w9D+71cGr9QEPTK"
   },
   {
     "__type__": "cc.Canvas",
