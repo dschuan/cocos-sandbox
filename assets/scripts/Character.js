@@ -16,7 +16,8 @@ cc.Class({
         jumpForce: 0,
         // maximal movement speed
         maxMoveSpeed: 0,
-        // acceleration
+        // face direction
+        faceRight: true,
         leftButton: {
             default: null,
             type: cc.Node,
@@ -36,23 +37,26 @@ cc.Class({
 
     // Registers movements on arrow key press
     onKeyDown(e){
-        console.log('Key down', this.allowJump, this.jump);
         switch(e.keyCode){
             case cc.macro.KEY.right:
+                this.faceRight = true;
                 this.xSpeed = 300;
                 break;
             case cc.macro.KEY.left:
+                this.faceRight = false;
                 this.xSpeed = -300;
                 break;       
             case cc.macro.KEY.up:
                 this.jump = true;
-                break;           
+                break; 
+            case cc.macro.KEY.a:
+                this.attack = true;
+                break;          
         }
     },
 
     onKeyUp (event) {
         // unset a flag when key released
-        console.log('Key up', this.allowJump, this.jump);
 
         switch(event.keyCode) {
             case cc.macro.KEY.right:
@@ -64,6 +68,9 @@ cc.Class({
             case cc.macro.KEY.up:
                 this.jump = false;
                 break;
+            case cc.macro.KEY.a:
+                this.attack = false;
+                break;  
         }
     },
 
@@ -73,9 +80,11 @@ cc.Class({
             switch (button) {
                 case 'leftButton':
                     this.xSpeed = -300;
+                    this.faceRight = false;
                     break;
                 case 'rightButton':
                     this.xSpeed = 300;
+                    this.faceRight = true;
                     break;
                 case 'upButton':
                     this.jump = true;
@@ -114,9 +123,24 @@ cc.Class({
 
     // Jumping behaviour, prevents jumps from occurring until character collides with Land
     onBeginContact(contact, selfCollider, otherCollider) {
-        console.log(otherCollider.node.name);
+        console.log(otherCollider.node.name, selfCollider.tag, otherCollider.tag, this.attack);
         if (otherCollider.node.name === "Land") {
             this.allowJump = true;
+        }
+        if (otherCollider.node.name === "Enemy") {
+            // on begin contact, stores the enemy node in state machine 
+            if (selfCollider.tag === 1 && otherCollider.tag === 1) {
+                this.otherTarget = otherCollider.node;
+            }
+        }
+    },
+
+    onEndContact(contact, selfCollider, otherCollider) {
+        if (otherCollider.node.name === "Enemy") {
+            // Remove enemy node in state machine when enemy and character are no longer in contact
+            if (selfCollider.tag === 1 && otherCollider.tag === 1) {
+                this.otherTarget = null;
+            }
         }
     },
 
@@ -125,6 +149,10 @@ cc.Class({
         this.jump = false;
         this.allowJump = true;
 
+        // state machine that stores all enemies that is in attack range of the character
+        this.otherTarget = null;
+
+        this.attack = false;
         // The main character's current horizontal velocity
         this.xSpeed = 0;
 
@@ -150,19 +178,24 @@ cc.Class({
 
         // update speed of each frame according to the current acceleration direction
         if (this.jump && this.allowJump) {
-            console.log('Jumping')
             let rigidbody = this.node.getComponent(cc.RigidBody);
             rigidbody.applyLinearImpulse(new cc.Vec2(0,this.jumpForce), rigidbody.getWorldCenter(),true);
             this.allowJump = false;
 
         }
 
-        // restrict the movement speed of the main character to the maximum movement speed
-        if ( Math.abs(this.xSpeed) > this.maxMoveSpeed ) {
-            // if speed reach limit, use max speed with current direction
-            this.xSpeed = this.maxMoveSpeed * this.xSpeed / Math.abs(this.xSpeed);
+        // Lets the character face the direction he is moving
+
+        if (this.faceRight) {
+            this.node.scaleX = Math.abs(this.node.scaleX);
+        } else {
+            this.node.scaleX = -1 * Math.abs(this.node.scaleX);
         }
 
+        // If attack occurs when any enemy targets are in range, destroy target
+        if (this.attack && !!this.otherTarget) {
+            this.otherTarget.destroy();
+        }
         // update the position of the main character according to the current speed
         this.node.x += this.xSpeed * dt;
     },
